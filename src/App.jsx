@@ -1,72 +1,75 @@
-function App() {
+import { Link, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import AuthForm from './components/AuthForm'
+import Dashboard from './components/Dashboard'
+import Admin from './components/Admin'
+
+function Nav() {
+  const navigate = useNavigate()
+  const user = JSON.parse(localStorage.getItem('user') || 'null')
+  const logout = () => { localStorage.removeItem('token'); localStorage.removeItem('user'); navigate('/login') }
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Subtle pattern overlay */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_50%)]"></div>
-
-      <div className="relative min-h-screen flex items-center justify-center p-8">
-        <div className="max-w-2xl w-full">
-          {/* Header with Flames icon */}
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center mb-6">
-              <img
-                src="/flame-icon.svg"
-                alt="Flames"
-                className="w-24 h-24 drop-shadow-[0_0_25px_rgba(59,130,246,0.5)]"
-              />
-            </div>
-
-            <h1 className="text-5xl font-bold text-white mb-4 tracking-tight">
-              Flames Blue
-            </h1>
-
-            <p className="text-xl text-blue-200 mb-6">
-              Build applications through conversation
-            </p>
-          </div>
-
-          {/* Instructions */}
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-blue-500/20 rounded-2xl p-8 shadow-xl mb-6">
-            <div className="flex items-start gap-4 mb-6">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold">
-                1
-              </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">Describe your idea</h3>
-                <p className="text-blue-200/80 text-sm">Use the chat panel on the left to tell the AI what you want to build</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4 mb-6">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold">
-                2
-              </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">Watch it build</h3>
-                <p className="text-blue-200/80 text-sm">Your app will appear in this preview as the AI generates the code</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold">
-                3
-              </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">Refine and iterate</h3>
-                <p className="text-blue-200/80 text-sm">Continue the conversation to add features and make changes</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="text-center">
-            <p className="text-sm text-blue-300/60">
-              No coding required • Just describe what you want
-            </p>
-          </div>
+    <div className="bg-slate-900 text-white">
+      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+        <Link to="/" className="font-semibold">Email Validator</Link>
+        <div className="flex items-center gap-4">
+          {user ? (
+            <>
+              <Link to="/dashboard" className="text-slate-300 hover:text-white">Dashboard</Link>
+              {user.role==='admin' && <Link to="/admin" className="text-slate-300 hover:text-white">Admin</Link>}
+              <button onClick={logout} className="bg-slate-700 px-3 py-1.5 rounded">Logout</button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="text-slate-300 hover:text-white">Login</Link>
+              <Link to="/signup" className="text-slate-300 hover:text-white">Sign up</Link>
+            </>
+          )}
         </div>
       </div>
     </div>
+  )
+}
+
+function HomeHero() {
+  return (
+    <div className="min-h-[70vh] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center">
+      <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-8 items-center">
+        <div>
+          <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight">Verify email deliverability with confidence</h1>
+          <p className="text-slate-300 mt-4">Paste a list, validate instantly, and track results over time. Built-in admin dashboard for oversight.</p>
+          <div className="mt-6 flex gap-3">
+            <Link to="/signup" className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded">Get started</Link>
+            <Link to="/login" className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded">Sign in</Link>
+          </div>
+        </div>
+        <div className="bg-slate-800/60 border border-slate-700 rounded-2xl p-6">
+          <p className="text-slate-300">Try it out after you sign in: paste emails and get statuses like valid, invalid, or unknown. We also flag disposables and suggest corrections.</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function RequireAuth({ children, role }) {
+  const token = localStorage.getItem('token')
+  const user = JSON.parse(localStorage.getItem('user') || 'null')
+  if (!token) return <Navigate to="/login" replace />
+  if (role && user?.role !== role) return <Navigate to="/" replace />
+  return children
+}
+
+function App() {
+  return (
+    <>
+      <Nav />
+      <Routes>
+        <Route path="/" element={<HomeHero />} />
+        <Route path="/login" element={<AuthForm mode="login" />} />
+        <Route path="/signup" element={<AuthForm mode="signup" />} />
+        <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
+        <Route path="/admin" element={<RequireAuth role="admin"><Admin /></RequireAuth>} />
+      </Routes>
+    </>
   )
 }
 
